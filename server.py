@@ -89,17 +89,24 @@ def create_eventbrite_event():
 
     # - Make a request to the Eventbrite API to create a new event using the
     # form data.
+    headers = {'Authorization': 'Bearer ' + os.environ.get("EVENTBRITE_TOKEN")}
+    payload = {'event.name.html': name,
+               'event.start.utc': start_time,
+               'event.end.utc': end_time,
+               'event.start.timezone': timezone,
+               'event.end.timezone': timezone,
+               'event.currency': currency}
+    response = requests.post("https://www.eventbriteapi.com/v3/events/", data=payload,
+                             headers=headers)
     # - Flash add the created event's URL as a link to the success flash message
 
-    ##### UNCOMMENT THIS once you make your request! #####
-    # if response.ok:
-    #     flash("Your event was created!")
-    #     return redirect("/")
-    # else:
-    #     flash("Error: " + response.json()['error_description'])
-    #     return redirect("/create-event")
-
-    return redirect("/")
+    #### UNCOMMENT THIS once you make your request! #####
+    if response.ok:
+        flash("Your event was created!")
+        return redirect("/")
+    else:
+        flash("Error: " + response.json()['error_description'])
+        return redirect("/create-event")
 
 
 ############ Further Study ############
@@ -110,9 +117,16 @@ def show_my_events():
 
     # Add your API request here.
 
-    data = {'This': ['Some', 'mock', 'JSON']} # Replace this with your response data
+    payload = {"token": os.environ.get("EVENTBRITE_TOKEN")}
+
+    response = requests.get("https://www.eventbriteapi.com/v3/users/me/events/",
+                            params=payload)
+    data = response.json()  # Replace this with your response data
 
     events_dict = {}
+
+    for event in data['events']:
+        events_dict[event['id']] = event['name']['text']
 
     return render_template("my-events.html",
                            events=events_dict,
